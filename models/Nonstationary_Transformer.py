@@ -50,7 +50,6 @@ class Model(nn.Module):
         self.pred_len = configs.pred_len
         self.seq_len = configs.seq_len
         self.label_len = configs.label_len
-        self.output_attention = configs.output_attention
 
         # Embedding
         self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
@@ -62,7 +61,7 @@ class Model(nn.Module):
                 EncoderLayer(
                     AttentionLayer(
                         DSAttention(False, configs.factor, attention_dropout=configs.dropout,
-                                    output_attention=configs.output_attention), configs.d_model, configs.n_heads),
+                                    output_attention=False), configs.d_model, configs.n_heads),
                     configs.d_model,
                     configs.d_ff,
                     dropout=configs.dropout,
@@ -120,7 +119,10 @@ class Model(nn.Module):
         std_enc = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5).detach()  # B x 1 x E
         x_enc = x_enc / std_enc
         # B x S x E, B x 1 x E -> B x 1, positive scalar
-        tau = self.tau_learner(x_raw, std_enc).exp()
+        tau = self.tau_learner(x_raw, std_enc)
+        threshold = 80.0
+        tau_clamped = torch.clamp(tau, max=threshold)  # avoid numerical overflow
+        tau = tau_clamped.exp()
         # B x S x E, B x 1 x E -> B x S
         delta = self.delta_learner(x_raw, mean_enc)
 
@@ -147,7 +149,10 @@ class Model(nn.Module):
         std_enc = std_enc.unsqueeze(1).detach()
         x_enc /= std_enc
         # B x S x E, B x 1 x E -> B x 1, positive scalar
-        tau = self.tau_learner(x_raw, std_enc).exp()
+        tau = self.tau_learner(x_raw, std_enc)
+        threshold = 80.0
+        tau_clamped = torch.clamp(tau, max=threshold)  # avoid numerical overflow
+        tau = tau_clamped.exp()
         # B x S x E, B x 1 x E -> B x S
         delta = self.delta_learner(x_raw, mean_enc)
 
@@ -167,7 +172,10 @@ class Model(nn.Module):
         std_enc = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5).detach()  # B x 1 x E
         x_enc = x_enc / std_enc
         # B x S x E, B x 1 x E -> B x 1, positive scalar
-        tau = self.tau_learner(x_raw, std_enc).exp()
+        tau = self.tau_learner(x_raw, std_enc)
+        threshold = 80.0
+        tau_clamped = torch.clamp(tau, max=threshold)  # avoid numerical overflow
+        tau = tau_clamped.exp()
         # B x S x E, B x 1 x E -> B x S
         delta = self.delta_learner(x_raw, mean_enc)
         # embedding
@@ -186,7 +194,10 @@ class Model(nn.Module):
         std_enc = torch.sqrt(
             torch.var(x_enc - mean_enc, dim=1, keepdim=True, unbiased=False) + 1e-5).detach()  # B x 1 x E
         # B x S x E, B x 1 x E -> B x 1, positive scalar
-        tau = self.tau_learner(x_raw, std_enc).exp()
+        tau = self.tau_learner(x_raw, std_enc)
+        threshold = 80.0
+        tau_clamped = torch.clamp(tau, max=threshold)  # avoid numerical overflow
+        tau = tau_clamped.exp()
         # B x S x E, B x 1 x E -> B x S
         delta = self.delta_learner(x_raw, mean_enc)
         # embedding

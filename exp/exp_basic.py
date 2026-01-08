@@ -2,7 +2,9 @@ import os
 import torch
 from models import Autoformer, Transformer, TimesNet, Nonstationary_Transformer, DLinear, FEDformer, \
     Informer, LightTS, Reformer, ETSformer, Pyraformer, PatchTST, MICN, Crossformer, FiLM, iTransformer, \
-    Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, TemporalFusionTransformer, SCINet
+    Koopa, TiDE, FreTS, TimeMixer, TSMixer, SegRNN, MambaSimple, TemporalFusionTransformer, SCINet, PAttn, TimeXer, \
+    WPMixer, MultiPatchFormer, KANAD, MSGNet, TimeFilter, Sundial, TimeMoE, Chronos, Moirai, TiRex,\
+    TimesFM, Chronos2
 
 
 class Exp_Basic(object):
@@ -33,7 +35,21 @@ class Exp_Basic(object):
             'TSMixer': TSMixer,
             'SegRNN': SegRNN,
             'TemporalFusionTransformer': TemporalFusionTransformer,
-            "SCINet": SCINet
+            "SCINet": SCINet,
+            'PAttn': PAttn,
+            'TimeXer': TimeXer,
+            'WPMixer': WPMixer,
+            'MultiPatchFormer': MultiPatchFormer,
+            'KANAD': KANAD,
+            'MSGNet': MSGNet,
+            'TimeFilter': TimeFilter,
+            'Sundial': Sundial,
+            'TimeMoE': TimeMoE,
+            'Chronos': Chronos,
+            'Moirai': Moirai,
+            'TiRex': TiRex,
+            'TimesFM': TimesFM,
+            'Chronos2': Chronos2
         }
         if args.model == 'Mamba':
             print('Please make sure you have successfully installed mamba_ssm')
@@ -48,11 +64,14 @@ class Exp_Basic(object):
         return None
 
     def _acquire_device(self):
-        if self.args.use_gpu:
+        if self.args.use_gpu and self.args.gpu_type == 'cuda':
             os.environ["CUDA_VISIBLE_DEVICES"] = str(
                 self.args.gpu) if not self.args.use_multi_gpu else self.args.devices
             device = torch.device('cuda:{}'.format(self.args.gpu))
             print('Use GPU: cuda:{}'.format(self.args.gpu))
+        elif self.args.use_gpu and self.args.gpu_type == 'mps':
+            device = torch.device('mps')
+            print('Use GPU: mps')
         else:
             device = torch.device('cpu')
             print('Use CPU')
